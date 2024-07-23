@@ -1,0 +1,32 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Ryan James J. Martinez"
+  navbar:
+    background: primary
+    left:
+      - text: Projects
+        href: projects/index.qmd
+    right:
+      - icon: facebook
+        href: https://www.facebook.com/profile.php?id=100074061859253
+      - icon: envelope
+        aria-label: email
+        href: "mailto:martinezryanjames08@gmail.com"  
+  search: 
+    location: navbar
+    type: textbox
+
+filters: 
+  - parse-latex.lua
+    
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: false
+
+editor: visual
+

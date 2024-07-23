@@ -1,0 +1,40 @@
+---
+about:
+  id: hero-heading
+  template: jolla
+  image: images/profile.jpg
+  links:
+    - icon: facebook
+      text: facebook
+      href: https://www.facebook.com/profile.php?id=100074061859253
+    - icon: envelope
+      text: Email
+      href: "mailto:martinezryanjames08@gmail.com" 
+---
+
+:::{#hero-heading}
+
+Hello there! I'm Ryan James J. Martinez, a dedicated Statistician currently pursuing an MS degree with a major in Statistics at MSU-IIT. With a robust foundation in statistical analysis and a deep proficiency in the R programming language, I specialize in analyzing, visualizing, and interpreting complex data. My portfolio highlights projects that showcase my statistical expertise. When I'm not on data platforms, I find joy in working out and reading. 
+
+## Skills
+
+I am well-versed in different regression techniques, multivariate techniques, feature engineering, non-parametric statistics, time series, etc. I also have the capacity of constructing sophisticated machine-learning models. Skills that have an advanced understanding but are not limited to:
+
+* Sampling Techniques
+* Statistical Analysis
+* Bayesian Analysis
+* Text Analysis
+* Data Visualization
+* Data Cleaning
+* Data Modeling
+* Data Scraping
+
+
+## Education
+
+**Mindanao State University - Iligan Institute of Technology** | Tibanga, IC
+
+* BS Statistics | 2019-2023
+* MS Statistics | 2023-*current*
+
+:::

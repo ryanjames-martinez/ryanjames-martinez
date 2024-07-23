@@ -1,0 +1,776 @@
+---
+title: "Multidimensional Scaling"
+format:
+  html:
+    toc: true
+    toc-location: left
+---
+
+\section{Introduction}
+
+Dimension-reduction techniques transform complex, high-dimensional datasets into simpler two or three-dimensional visual representations. These methods ensure that the relative distances between data points are maintained, making it easier to analyze and interpret the spatial relationships and patterns inherent in the data.
+
+Multidimensional Scaling (MDS) is a dimension-reduction technique designed to project high-dimensional data to two or three dimensions while preserving relative distances between observations. The fundamental aim is to place items so that the distances in the low-dimensional space as closely as possible match the given dissimilarities, usually measured on a qualitative or quantitative scale.
+
+MDS is a powerful statistical technique for analyzing similarity or dissimilarity data, allowing researchers to visualize the level of similarity of individual cases of a dataset by representing data points in a low-dimensional space. This technique is particularly useful in fields such as psychology, ecology, and market research, where it can reveal underlying structures in complex data sets (Borg & Groenen, 2005; Kruskal & Wish, 1978) and where measuring the perceived differences between data can be pivotal.
+
+This statistical technique not only helps uncover hidden relationships in data but also facilitates the creation of insightful visual representations.
+
+\section{Proximity Data}
+
+Proximity indicates closeness in any given context, which must be clearly defined before starting any analysis. For instance, using simple Euclidean distance is straightforward. Two fundamental measures, similarity and dissimilarity, are commonly used to assess how alike or different objects or individuals are. These measures are quantified through real functions, such as the similarity or dissimilarity between the $r$-th and $s$-th objects, typically non-negative. The dissimilarity of an object with itself is always zero, whereas its similarity with itself represents the highest possible value, normalized to one. The selection of these proximity measures depends on the specific problem being addressed. Sometimes, these measurements do not rely on any direct observations and are purely subjective, like a teacher evaluating students' friendships. In other cases, these measures are derived from a data matrix and are referred to as similarity (or dissimilarity) coefficients.
+
+\newpage
+
+```{=tex}
+\begin{table}[h]
+\centering
+\caption{Dissimilarity measures for quantitative data}
+\begin{tabular}{ll}
+\hline
+\textbf{Dissimilarity Measure} & \textbf{Formula} \\
+\hline
+Euclidean distance & $\delta_{rs} = \sqrt{\sum_i (x_{ri} - x_{si})^2}$ \\
+Weighted Euclidean & $\delta_{rs} = \sqrt{\sum_i w_i (x_{ri} - x_{si})^2}$ \\
+Mahalanobis distance & $\delta_{rs} = \sqrt{(x_{ri} - x_{si})' \Sigma^{-1} (x_{r} - x_{s})}$ \\
+City block metric & $\delta_{rs} = \sum_i |x_{ri} - x_{si}|$ \\
+Minkowski metric & $\delta_{rs} = \left(\sum_i w_i|x_{ri} - x_{si}|^\lambda\right)^{1/\lambda}$ \\
+Canberra metric & $\delta_{rs} = \sum_i \frac{|x_{ri} - x_{si}|}{x_{ri} + x_{si}}$ \\
+Divergence & $\delta_{rs} = \frac{1}{P} \sum_i \frac{(x_{ri} - x_{si})^2}{x_{ri} + x_{si}}$ \\
+Bray-Curtis & $\delta_{rs} = \frac{1}{P} \sum_i |x_{ri} - x_{si}| \Big/ \sum_i (x_{ri} + x_{si})$ \\
+Soergel & $\delta_{rs} = \frac{1}{P} \sum_i |x_{ri} - x_{si}| \Big/ \sum_i \max(x_{ri}, x_{si})$ \\
+Bhattacharyya distance & $\delta_{rs} = \sqrt{\sum_i \sqrt{x_{ri} \cdot x_{si}}}$ \\
+Wave-Hedges & $\delta_{rs} = \sum_i \left(1 - \frac{\min(x_{ri}, x_{si})}{\max(x_{ri}, x_{si})}\right)$ \\
+Angular separation & $\delta_{rs} = 1 - \frac{\sum_i x_{ri}x_{si}}{\sqrt{\sum_i x_{ri}^2 \sum_i x_{si}^2}}$ \\
+Correlation & $\delta_{rs} = 1 - \frac{\sum_i (x_{ri} - \bar{x}_r)(x_{si} - \bar{x}_s)}{\sqrt{\sum_i (x_{ri} - \bar{x}_r)^2 \sum_i (x_{si} - \bar{x}_s)^2}}$ \\
+\hline
+\end{tabular}
+\end{table}
+```
+The dissimilarity metrics from the table above are the popular dissimilarities for quantitative data. The $X = [x_{ri}]$ denotes the data matrix obtained from $n$ objects on $p$ variables $(r=1,...,n; i=1,...,p)$. The vector for the $r$-th object is denoted by $(x)_r$ and so $X = [\mathbf{x}_r^T]$. The $\{w_i\}$ are the weights, and the paramter $\lambda$ are chosen as parameters.
+
+```{=tex}
+\begin{table}[ht]
+\centering
+\caption{Summary of binary totals}
+\begin{tabular}{cccc}
+\toprule
+& Object s &  & \\
+\midrule
+Object r & 1 & 0 & \\
+1 & $a$ & $b$ & $a + b$\\
+0 & $c$ & $d$ & $c + d$\\
+& $a+c$ & $b+d$ & $p = a+b+c+d$\\
+\bottomrule
+\end{tabular}
+\end{table}
+```
+When dealing with binary variables, it's typical to calculate a similarity coefficient and then convert this into a dissimilarity coefficient using a formula like $\delta_{rs} = 1- s_{rs}$. This similarity calculation between two objects, r and s, relies on Table 2, which displays how many variables, $a$, out of the total $p$ variables have both objects scoring "1". It also shows the number of variables, $b$, where $r$ scores "1" and s scores "0", and so on. Table 3 outlines various similarity coefficients that are derived from these four counts: $a, b, c, d$. Depending on the specific situation, certain coefficients may be more suitable, and often, experimenting with several options is recommended to find the most robust choice. Hubalek (1982) provides an extensive list of these similarity coefficients for binary data, which can be quite useful for in-depth analysis.
+
+```{=tex}
+\begin{table}[ht]
+\centering
+\caption{Similarity coefficients for Binary Data}
+\begin{tabular}{ll}
+\toprule
+\textbf{Coefficient} & \textbf{Formula} \\
+\midrule
+Braun, Blanque & $s_{rs} = \frac{a}{\max((a+b), (a+c))}$ \\
+Czekanowski, Sorensen, Dice & $s_{rs} = \frac{2a+b+c}{2a}$ \\
+Hamman & $s_{rs} = \frac{a - (b+c) + d}{a+b+c+d}$ \\
+Jaccard coefficient & $s_{rs} = \frac{a}{a+b+c}$ \\
+Kulczynski & $s_{rs} = \frac{a}{b+c}$ \\
+Kulczynski & $s_{rs} = \frac{1}{2} \left(\frac{a}{a+b} + \frac{a}{a+c}\right)$ \\
+Michael & $s_{rs} = \frac{(a+d)^2 - (b+c)^2}{4(ad-bc)}$ \\
+Mountford & $s_{rs} = \frac{2a}{a+b+c+2bc}$ \\
+Mozley, Margalef & $s_{rs} = \frac{a(b+c)+2bc}{a(a+b+c+d)}$ \\
+Ochiai & $s_{rs} = \sqrt{\frac{a}{(a+b)(a+c)}}$ \\
+Phi & $s_{rs} = \frac{\sqrt{(a+b)(a+c)(d+b)(d+c)}}{ad-bc}$ \\
+Rogers, Tanimoto & $s_{rs} = \frac{a+d}{a+2b+2c+d}$ \\
+Russell, Rao & $s_{rs} = \frac{a}{a+b+c+d}$ \\
+Simple matching coefficient & $s_{rs} = \frac{a+d}{a+b+c+d}$ \\
+Simpson & $s_{rs} = \frac{a}{\min((a+b), (a+c))}$ \\
+Sokal, Sneath, Anderberg & $s_{rs} = \frac{a}{a+2(b+c)}$ \\
+Yule & $s_{rs} = \frac{ad-bc}{ad+bc}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+```
+For categorical data, if two objects, $r$ and $s$, fall into the same category, their dissimilarity score $\delta_{rs}$ is zero, indicating perfect similarity. Conversely, if they are in different categories, the score is one, reflecting complete dissimilarity. However, in cases where the data is a mix of binary, quantitative, and categorical types, calculating similarity becomes more complex.
+
+John Gower, in 1971, proposed a flexible method to calculate a general similarity coefficient that effectively handles mixed data types. His formula is: $$s_{rs} = \frac{\sum_{i=1}^p w_{rsi}s_{rsi}}{\sum_{i=1}^p w_{rsi}}$$ Here, $s_{rsi}$ quantifies the similarity for the i-th variable between objects $r$ and $s$. The weight $w_{rsi}$ is set to one when the i-th variable can be directly compared between the two objects and zero otherwise. For quantitative data, this similarity, $s_{rsi}$ is calculated as $1- \frac{x_{ri}- x_{si}}{R_i}$, where $R_i$ represents the range of the $i$-th variable. In binary scenarios where data indicate presence or absence, the similarity is one if both objects either present or absent, and zero otherwise. For non-categorical data, the similarity is set to one when both objects belong to the same category, and zero otherwise. This approach ensures that the measure of similarity is nuanced and reflective of the data's complexity.
+
+\newpage
+
+\section{Multidimensional Scaling}
+
+<!-- # ```{r, echo=FALSE, fig.cap="MDS variants", out.width = '80%', fig.align='center'} -->
+
+<!-- # knitr::include_graphics("D:/Ryan/College/MS/Summer/STT258/Multidimensional Scaling/MDS variants.png") -->
+
+<!-- # ``` -->
+
+<!-- Source: \url{https://www.youtube.com/watch?v=VKSJayDi_lQ} -->
+
+MDS blends elements of classical geometry and metric tensor mathematics, focusing primarily on reducing distances and dimensions to simpler forms. Essentially, MDS turns a complex matrix of item similarities or dissimilarities into a visual map, where points represent items in a lower-dimensional space. The key difference in MDS techniques is between metric and nonmetric methods.
+
+\subsection{Metric Multidimensional Scaling}
+
+Given a number of objects with their dissimilarities recorded, metric Multidimensional Scaling (mMDS) aims to arrange these objects as points in a space such that the spatial distances between the points match the given dissimilarities. Each dissimilarity value, denoted by $\delta_{rs}$ is transformed by a continuous, monotonic function $f$ to determine the distance $d_{rs}$ between points in this space, where $$d_{rs} = f(\delta_{rs})$$ This method has its roots in classical scaling, a technique developed in the 1930s by Young and Householder (1938). They demonstrated that starting from a matrix of distances among all points in a Euclidean space, it's possible to compute coordinates for these points that preserve these distances. The approach gained widespread recognition when Torgerson (1952) popularized it by adapting the method to use dissimilarities instead of actual distances, thus broadening its application. <!-- Metric MDS, also known as classical scaling, utilizes distances between pairs of objects in a dataset to position each object in a lower-dimensional space. This technique assumes that distances are measured on a metric scale and aims to preserve these distances as accurately as possible. The primary goal of metric MDS is to maintain the pairwise distance between points, minimizing the discrepancy between the "high-dimensional" original distances and the distances in the projected lower-dimensional space. This is typically achieved by minimizing a stress function. -->
+
+\subsection{Principal Coordinate Analysis}
+
+Principal Coordinate Analysis (PCoA), often interchangeable with metric MDS in many contexts, also focuses on preserving the actual distances between pairs of objects in the dimension-reduced space. The approach starts with a distance matrix and applies eigenvalue decomposition to derive the principal coordinates. PCoA can handle any symmetric distance matrix and thus provides a flexible method for dimensionality reduction. Primary distinction to Principal Component Analysis (PCA) is that PCoA uses distance matrix of the items while PCA utilizes covariance matrix of the exploratory variables.
+
+To grasp the link between PCoA and PCA, it's essential to revisit some foundational concepts and introduce new insights from these methods:
+
+```{=tex}
+\begin{enumerate}
+\item Principal Components as Linear Combinations: \
+
+Each principal component is a linear combination of the original variables, represented by the formula:
+$$Z_i = a_{i1}X_1 + a_{i2}X_2 + \dots + a_{ip}X_p$$
+This showcases how principal components simplify the data by transforming the original variables into new axes that capture the majority of the data's variance.
+
+\item Covariance and Similarity Matrices: \
+
+When the variables have zero mean, the covariance matrix $C$ is calculated as:
+$$\mathbf{C} = \frac{\mathbf{X}^T\mathbf{X}}{n-1}$$
+PCA uses this covariance matrix to derive eigenvalues and eigenvectors that define the principal components. In contrast, PCoA uses a matrix $\mathbf{S} = \mathbf{XX}^T$, which represents similarities or dissimilarities, making it suitable for data that doesn't naturally fit into a covariance analysis framework.
+
+
+\item Calculating and Interpreting Components: \
+
+The principal components are obtained through:
+$$\mathbf{Z} = \mathbf{XA}'$$
+where $\mathbf{Z}$  includes the principal component scores, and $\mathbf{A}'$ is the matrix of eigenvectors' transpose. This transformation allows for the original data matrix $\mathbf{X}$ to be reconstructed from $\mathbf{Z}$ and $\mathbf{A}$:
+$$\mathbf{X} = \mathbf{ZA}$$
+Unlike PCA, PCoA often scales components differently, affecting how they're interpreted compared to PCA.
+
+\end{enumerate}
+```
+\subsection{Nonmetric Multidimensional Scaling}
+
+The non-metric Multidimensional Scaling (nMDS) method was initially conceptualized by Shepard in the early 1960s and was further refined by Kruskal shortly thereafter. This approach involves arranging a set of $n$ objects based on their dissimilarities, $\delta_{rs}$ into a configuration of $n$ points within typically Euclidean space. Each object corresponds to a point such that the spatial layout reflects the dissimilarities as accurately as possible.
+
+NMDS relaxes the requirement of preserving the exact distances and focuses instead on preserving the rank order of distances. This method is particularly useful when the distances do not adhere strictly to a metric scale or when the exact magnitudes of distances are less important than the order of these distances. The primary aim here is to maintain the ordinal relationship of the distances, such as ensuring that if object A is closer to object B than to object C in high-dimensional space, the same should be true in the reduced space. This involves an iterative process where the configuration is adjusted to minimize a stress function shown in the diagnositc section.
+
+\subsection{Algorithm}
+
+The algorithm for recovering coordinates from distances between pairs of points is as follows:
+
+```{=tex}
+\begin{enumerate}
+    \item Form matrix $\mathcal{A} = -\frac{1}{2} \delta_{rs}^2$
+    \item Form matrix $\mathcal{B} = \mathcal{HAH}$, where $\mathcal{H}$ is the centering matrix $\mathcal{H} = \mathcal{I}- n^{-1} \mathbf{1}_n\mathbf{1}_n^T$, where $\mathcal{I}$ is the identity matrix, and $\mathbf{1}_n$ is a vector of ones.
+    \item Find the spectral decomposition of $\mathcal{B}, \mathcal{B} = \mathcal{V} \Lambda \mathcal{V}^T$, where $\Lambda$ is the diagonal matrix formed from eigenvalues of $\mathcal{B}$, and $\mathcal{V}$ is the matrix of corresponding eigenvectors.
+    \item If the points were originally in a $p$-dimensional space, the first $p$ eigenvalues of $\mathcal{B}$ are nonzero and the remaining $n-p$ are zero. Discard these from $\Lambda$ (rename as $\Lambda_1$, and discard the corresponding eigenvalues from $\mathcal{V}$ (rename as $\mathcal{V}_1$).
+    \item Find $\mathcal{X} = \mathcal{V}_1 \Lambda_1^{1/2},$ and coordinates of the points are given by the row of $\mathcal{X}$.
+\end{enumerate}
+```
+\section{Model Evaluation and Diagnostics}
+
+\subsection{Standardized Residual Sum of Squares}
+
+\begin{equation} 
+STRESS(q) = \left\{\dfrac{\sum\sum_{r < s}\left(d_{rs}^{(q)} - \hat{d}_{rs}^{(q)}\right)^2}{\sum\sum_{r < s} \left(d_{rs}^{(q)}\right)^2}\right\}^{1/2}
+\end{equation} where
+
+```{=tex}
+\begin{itemize}
+    \item $d_{rs}^{(q)}$ is the distance between object $r$ and object $s$ for $q$ configuration; and
+    \item $\hat{d}_{rs}^{(q)}$ is the regression of $d_{rs}^{(q)}$ and $\delta_{rs}$(data distance).
+\end{itemize}
+```
+Kruskall (1978) suggests the stress be informally interpreted according to the guidelines:
+
+```{=tex}
+\begin{table}[ht]
+\centering
+\caption{Stress Value Category}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\multicolumn{1}{l}{Stress} & Goodness of fit \\ \midrule
+20\%                       & Poor            \\
+10\%                       & Fair            \\
+5\%                        & Good            \\
+2.5\%                      & Excellent       \\
+0\%                        & Perfect         \\ \bottomrule
+\end{tabular}
+\end{table}
+```
+\subsection{Squared Standardized Residual Sum of Squares}
+
+\begin{equation} 
+SSTRESS = \left\{\dfrac{\sum\sum_{r < s}\left(d_{rs}^2 - \hat{d}_{rs}^2\right)^2}{\sum\sum_{r < s} \left(d_{rs}\right)^4}\right\}^{1/2}
+\end{equation} where
+
+```{=tex}
+\begin{itemize}
+    \item $d_{rs}$ is the distance between object $r$ and object $s$ for the configuration; and
+    \item $\hat{d}_{rs}$ is the regression of $d_{rs}$ and $\delta_{rs}$(data distance).
+\end{itemize}
+```
+\section{Assumptions}
+
+Because MDS, like cluster analysis, operates directly on dissimilarities, no statistical distribution assumptions are necessary. There are, however, other important assumptions and these assumptions are:
+
+```{=tex}
+\begin{enumerate}
+\item The similarity values are symmetric(distance from A to B is the same as that from B to A); \
+
+This assumption states that the measurement of similarity or dissimilarity between any two points in the dataset should be the same. For instance, if you're measuring the distance or dissimilarity between two cities, A and B, the assumption is that the distance from A to B is identical to the distance from B to A. This is typical in cases where the dissimilarity measure is based on inherent characteristics that do not depend on order or direction, such as physical distance or Euclidean distance. When this assumption holds, the dissimilarity matrix used in MDS is symmetric. This simplifies the computation and interpretation of the spatial configuration that MDS produces.
+
+\item No similar points and; \
+
+If two points are identical (i.e., they have zero dissimilarity between them), it could potentially distort the spatial representation generated by MDS. Identical points can lead to issues such as 'ties' in the data, which might complicate the ranking of dissimilarities and affect the stress calculation. 
+
+\item No missing data \
+
+Missing data in the dissimilarity matrix can lead to incomplete pairwise comparisons. This complicates the algorithm’s ability to accurately place the points in the new spatial configuration. If data is missing, the MDS algorithm may not be able to correctly calculate distances that can introduce biases or inaccuracies. Complete data ensure that the distance calculations are based on all available and relevant information and this leads to a more reliable multidimensional scaling output.
+
+\end{enumerate}
+```
+\section{Procedure}
+
+The algorithm is summarized in these steps:
+
+```{=tex}
+\begin{enumerate}
+    \item Calculate the distance matrix 
+    \item A starting configuration is set up for the $N$ objects in $q$ dimensions.
+    \item Take the Euclidean distances between the objects are calculated for the assumed configuration. 
+    \item A regression of $d_{rs}$ on $\delta_{rs}$ is performed. The regression can be linear, polynomial, or monotonic.
+    \item The goodness of fit between the configuration distances and the disparities is measured by a suitable statistic (STRESS, SSTRESS).
+    \item Plot the stress plot across different $q$ dimensions and choose the best number of dimensions.
+\end{enumerate}
+```
+Now that we've covered the fundamental concepts, let's move on to the practical application of MDS. In the following sections, we will explore how MDS can be implemented to uncover patterns and relationships in real-world data sets. Through detailed examples, we'll demonstrate the steps involved and discuss the insights that can be gained from each MDS technique.
+
+\section{Application in R}
+
+In the application, three examples will be provided in total, covering mMDS, PCoA, and nMDS respectively. Each example is designed to illustrate the unique features and benefits of these different multidimensional scaling techniques. This will help users understand how each method can be effectively applied to analyze and visualize data sets. Additionally, all the applications will be coded in R, offering hands-on examples that users can follow and adapt for their specific data analysis needs. The code below are the helper packages that will allow us in performing MDS;
+
+```{r, message = FALSE, warning = FALSE}
+# Data Wrangling
+library(dplyr)
+# Web Scraping
+library(rvest)
+library(glue)
+library(readxl)
+# Haversine Distance
+library(geosphere)
+# Beautiful plots
+library(ggplot2)
+library(ggpubr)
+library(magrittr)
+library(ggfortify)
+# MDS/PCoA/NDMS
+library(MASS)
+library(ade4)
+library(vegan)
+```
+
+\subsection{1. Metric Multidimensional Scaling Example: Barangays of Iligan City}
+
+```{r, echo=FALSE, fig.cap="Map of Iligan", out.width = '100%', fig.align='center'}
+knitr::include_graphics("D:/Ryan/Portfolio/Quarto/Portfolio/projects/MDS/Iligan Map.png")
+```
+
+The goal for this data is to visualize and understand the spatial relationships among different barangays based on their geographic distances. We want to see if MDS accurately captures the original distances between each barangay in Iligan City. After performing MDS, we expect that Barangay Buru-un will be shown to be closer to Barangay Ditucalan or Maria Cristina, as opposed to its distance from Rogongon. The table showcases the list of barangays in Iligan City
+
+```{=tex}
+\begin{table}[!h]
+\centering
+\caption{List of Barangays}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+Abuno         & Hinaplanon     & Pala-o         & Saray            \\
+Acmac         & Hindang        & Panoroganan    & Suarez           \\
+Bagong Silang & Kabacsanan     & Poblacion      & Tambacan         \\
+Bonbonon      & Kalilangan     & Puga-an        & Tibanga          \\
+Bunawan       & Kiwalan        & Rogongon       & Tipanoy          \\
+Buru-un       & Lanipao        & San Miguel     & Tomas L. Cabili  \\
+Dalipuga      & Luinab         & San Roque      & Upper Tominobo   \\
+Del Carmen    & Mahayahay      & Santa Elena    & Tubod            \\
+Digkilaan     & Mainit         & Santa Filomena & Ubaldo Laya      \\
+Ditucalan     & Mandulog       & Santiago       & Upper Hinaplanon \\
+Dulag         & Maria Cristina & Santo Rosario  & Villa Verde      \\ \bottomrule
+\end{tabular}
+\end{table}
+```
+### Data
+
+The data for this application includes the coordinates of the barangay halls, which represent the locations of each barangay. The coordinates were collected using web scraping.
+
+```{r, eval = FALSE}
+barangays <- read.delim("Barangays.txt", header = FALSE)
+coordinates <- data.frame()
+for(i in 1:nrow(barangays)){
+  barangay <- tolower(barangays[i, ])
+  website <- glue("https://www.philatlas.com/mindanao/r10/iligan/{barangay}.html")
+  h <- read_html(website)
+  latitude <- html_elements(h, xpath='.//span[@id="latitude"]') %>% 
+    html_text()
+  longitude <- html_elements(h, xpath='.//span[@id="longitude"]') %>% 
+    html_text()
+  c <- cbind.data.frame(barangay, 
+                        latitude = as.numeric(latitude), 
+                        longitude = as.numeric(longitude))
+  coordinates <- rbind.data.frame(coordinates, c)
+}
+knitr::kable(head(coordinates))
+```
+
+```{r, echo = FALSE}
+coordinates <- read.csv("D:/Ryan/College/MS/Summer/STT258/coordinates.csv")
+knitr::kable(head(coordinates), caption = "Head of Iligan City Barangays Data")
+```
+
+The table above shows the first six of the barangays only. Also, the table illustrates the respective latitude and longitude to each of the barangays in Iligan city. Now that we are done the web scraping part, we proceed to the checking of assumptions.
+
+### Checking Assumptions
+
+```{r, message = FALSE, warning = FALSE}
+# Missing Data
+coordinates %>% sapply(., function(x) sum(is.na(x)))
+```
+
+The code snippet above sums the number of missing values in each of the variables. The result obtained shows that there are no missing values in any of the three variables. Therefore, there is no need to take any further steps to handle any missing data.
+
+```{r, message = FALSE, warning = FALSE}
+# Duplicates
+coordinates %>% 
+  group_by_all() %>% 
+  filter(n() > 1) %>% 
+  ungroup() 
+```
+
+The output of the code above indicates that the data contains no duplicates. This suggests that the coordinates of the barangays are unique, as expected.
+
+### Calculating Haversine Distance
+
+The Haversine formula calculates the shortest distance between two points on the surface of a sphere, given their longitudes and latitudes. This is particularly useful in geography for finding the distance between two locations on Earth, as it accounts for the Earth's curvature.
+
+When we provide the coordinates (latitude and longitude) of two barangays, the Haversine formula helps determine the great-circle (or orthodromic) distance between them. This distance represents the shortest path between the two points along the surface of the sphere, rather than a straight line through the Earth's interior. The formula of Haversine is
+
+```{=tex}
+\begin{equation}
+d = 2r \arcsin\left(\sqrt{\sin^2\left(\frac{\phi_2 - \phi_1}{2}\right) + \cos(\phi_1) \cos(\phi_2) \sin^2\left(\frac{\lambda_2 - \lambda_1}{2}\right)}\right)
+\end{equation}
+```
+where:
+
+```{=tex}
+\begin{itemize}
+    \item \( \phi_1, \phi_2 \) are the latitudes of the two points in radians,
+    \item \( \lambda_1, \lambda_2 \) are the longitudes of the two points in radians,
+    \item \( r \) is the radius of the Earth (approximately 6371 kilometers or 3959 miles),
+    \item \( d \) is the distance between the two points.
+\end{itemize}
+```
+The Haversine formula can be utilized in the distm() function, which takes latitude and longitude as parameters. Set the fun parameter to distHaversine to apply the formula mentioned above. The output is in matrix form, with the distance metric given in meters.
+
+```{r, message = FALSE, warning = FALSE}
+distances <- distm(coordinates[, c("longitude", "latitude")], 
+                   fun = distHaversine)
+distances <- distances/1000 #convert to km
+colnames(distances) <- coordinates$barangay
+rownames(distances) <- coordinates$barangay
+
+distances[1:5, 1:5]
+```
+
+Above is the output of the first five rows and five columns of the distance matrix. As expected, the distance of any point to itself is zero. Additionally, the distance from abuno to acmac, which is 9.988996, is the same as from acmac to abuno. This symmetry confirms that the matrix is symmetric.
+
+Now, we will proceed to find the optimal dimension that best represents our data. This involves analyzing the stress values and visualizing the corresponding plots to determine which dimensionality reduction provides the clearest and most informative representation of the underlying structure of our dataset.
+
+The code below defines a function based on the steps outlined in the Procedure section. This function has two parameters: distance, which is the distance matrix, and dimension, which specifies the number of dimensions the user wishes to explore. The function outputs the stress values for each dimension, along with corresponding plots to help determine the most suitable dimension.
+
+```{r, message = FALSE, warning = FALSE}
+optimal_dimension <- function(distance, dimension){
+  stress <- data.frame()
+  for(i in 1:dimension){
+    mds_result <- cmdscale(distance, k = i)
+    
+    # Calculate the distances in the reduced space
+    fitted_distance <- dist(mds_result)
+    fitted_distance <- as.vector(as.matrix(fitted_distance))
+    original_distance <- as.vector(as.matrix(distance))
+    
+    reg_output <- lm(fitted_distance ~ original_distance)
+    predicted_distance <- fitted(reg_output)
+    
+    # Calculating stress using the modified formula
+    stress_value <- sqrt(sum((fitted_distance - predicted_distance)^2) / 
+                           sum(fitted_distance^2))
+    s <- cbind.data.frame(dim = i, stress = stress_value)
+    stress <- rbind.data.frame(stress, s)
+  }
+  p <- ggplot(stress, aes(x=dim, y=stress)) +
+    geom_line() + geom_point() + scale_color_brewer(palette="Paired") +
+    labs(x = "Dimensions", title = "Stress Plot") +
+    theme_minimal()
+  print(p)
+  
+  return(stress)
+}
+```
+
+To find the optimal dimension for our analysis, we use the elbow method. This method involves looking at a line plot and finding the 'elbow,' a point where the benefits of adding more dimensions start to diminish significantly. Identifying this point helps us select the dimensionality that provides the most meaningful reduction in complexity without significant loss of information.
+
+```{r, message = FALSE, warning = FALSE, out.width = "80%", fig.align="center", fig.cap='Barangays in Iligan City Stress Plot'}
+optimal_dimension(distances, 10)
+```
+
+The stress plot above illustrates how stress diminishes as the number of dimensions increases. While the elbow in the plot might be subtle due to the small stress values, it appears around two dimensions. This suggests that adding more dimensions beyond two does not significantly enhance the data representation. Therefore, based on this plot, using two dimensions is likely adequate for capturing the structure of the data without adding unnecessary complexity or overfitting. The stress value for two dimensions is near $0\%$, indicating a perfect goodness of fit as suggested by Kruskal. This extremely low stress value demonstrates an excellent representation of the data in the chosen dimensional space. The stress values for dimensions three to ten are also near $0\%$, but selecting a dimension within that range becomes challenging to visualize effectively. Higher dimensions can complicate the interpretation without providing significant additional clarity.
+
+Having identified the optimal dimension that best represents our data, we will now proceed to perform MDS using two dimensions. To carry out metric MDS in `R`, we utilize the `cmdscale()` function, providing it with the distance matrix and specifying two as the number of dimensions.
+
+```{r, message = FALSE, warning = FALSE, out.width = "80%", fig.align="center", fig.cap='MDS plot of Barangays in Iligan City (Inverted)'}
+mds_result <- cmdscale(distances, k = 2)
+mds_df <- as.data.frame(mds_result)
+ggplot(mds_df, aes(V1, V2)) +
+  geom_point() +
+  geom_text(aes(label = rownames(distances)), size = 3.5, vjust=1) +
+  labs(x = "Dimension 1", y = "Dimension 2", title = "MDS Plot") +
+  theme_minimal()
+```
+
+\newpage
+
+The figure above presents an inverted version of the barangay locations in Iligan City. To match the exact location as the original map, we simply multiply the coordinates by -1. This sign reversal does not change the distances between the barangays based on the two dimensions, and the new dimension is therefore just as satisfactory as the original one.
+
+```{r, message = FALSE, warning = FALSE, out.width = "80%", fig.align="center", fig.cap='MDS plot of Barangays in Iligan City'}
+mds_df$V1 <- -1 * mds_df$V1
+mds_df$V2 <- -1 * mds_df$V2 
+ggplot(mds_df, aes(V1, V2)) +
+  geom_point() +
+  geom_text(aes(label = rownames(distances)), size = 3.5, vjust=1) +
+  labs(x = "Dimension 1", y = "Dimension 2", title = "MDS Plot") +
+  theme_minimal()
+```
+
+\newpage
+
+The points in Figure 4 now accurately represent the locations of barangays in Iligan City. As stated earlier, our objective was to verify whether Barangay Buru-un is closer to Barangay Maria Cristina or Barangay Ditucalan than to Barangay Rogongon. The MDS has effectively captured this relationship, as well as the distances between other barangays. Using two dimensions, the MDS has successfully mapped the precise distances among the barangays in Iligan City.
+
+\newpage
+
+\subsection{2. Principal Coordinate Analysis Example: Sparrow Data}
+
+After a severe storm on February 1, 1898, a number of moribund sparrows were taken to Hermon Bumpus' biological laboratory at Brown University, Rhode Island. Subsequently, about half of the birds died, and Bumpus saw this as an opportunity to see whether he could find any support for Charles Darwin's theory of natural selection. To this end, he made eight morphological measurements on each bird and also weighed the birds. The results for five of the measurements are shown below, for females only.
+
+The dataset contains five morphological measurements of the female sparrows where
+
+```{=tex}
+\begin{itemize}
+    \item total.length - measures from the tip of the beak to the end of the tail in *mm*
+    \item alar.extent - the distance from tip to tip of extended wings
+    \item beak.and.head - length of beak and head (from the tip of the beak to the occiput)
+    \item humerus - length of humerus
+    \item sternum - length of sternum
+    \item survival - the survival status of the bird, true if alive, or false otherwise
+\end{itemize}
+```
+At the conclusion of our PCoA modeling, we will compare the results with those obtained from PCA. This comparison will help us understand the differences in how each method captures and represents the underlying data structure.
+
+```{r, eval = FALSE, message = FALSE, warning = FALSE}
+sparrow_data <- read_excel("sparrow.xlsx")
+sparrow <- sparrow_data[, -c(1,7)]
+knitr::kable(head(sparrow_data), caption = "First six row of female sparrows")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+sparrow_data <- read_excel("D:/Ryan/College/MS/Summer/STT258/sparrow.xlsx")
+knitr::kable(head(sparrow_data), caption = "First six row of female sparrows")
+```
+
+For PCoA purpose, we remove the first column and the second column, and this can be achieved by the following code
+
+```{r, message = FALSE, warning = FALSE}
+sparrow <- sparrow_data[, -c(1,7)]
+```
+
+Now, we proceed by checking the assumptions.
+
+### Checking Assumptions
+
+```{r, message = FALSE, warning = FALSE}
+# Missing Data
+sparrow %>% sapply(., function(x) sum(is.na(x)))
+```
+
+The zero value from the result above suggests that each of the independent variables have no missing datas.
+
+```{r, message = FALSE, warning = FALSE}
+# Duplicates
+sparrow %>% 
+  group_by_all() %>% 
+  filter(n() > 1) %>% 
+  ungroup()
+```
+
+The result from the code suggests that no morphological measurements of the female sparrows are the same. Now we are done checking the assumptions, we now proceed to calculating the distance matrix of the data.
+
+### Calculating Euclidean distance
+
+Since we are about to model a PCoA example, the distance that is to be utilized is euclidean. This can be performed in `R` by using the `dist()` function that feeds the dataset and set the method to euclidean which indicates the usage of Euclidean distance.
+
+```{r, message = FALSE, warning = FALSE}
+dist_matrix <- dist(sparrow, method = "euclidean")
+dist_matrix %>% as.matrix() %>% .[1:5,1:5]
+```
+
+Now we are done calculating the distance matrix, and checking the assumptions, the preparations for modeling is now complete. Now, we find the optimal dimension of the dataset.
+
+### Modeling
+
+We set the dimension to 5, as a similar process to PCA.
+
+```{r, message = FALSE, warning = FALSE, out.width = "80%", fig.align="center", fig.cap='Sparrows Stress Plot'}
+optimal_dimension(dist_matrix, 5)
+```
+
+Figure 5 illustrates how the stress decreases as the number of dimensions increases from one to five. There's a noticeable drop in stress when moving from one to two dimensions, indicating that two dimensions capture much more of the data's structure compared to just one. The stress continues to reduce slightly as we add a third dimension, but the rate of decline slows down significantly.
+
+From the plot, we can see an 'elbow' forming between the second dimensions. This suggests that adding more dimensions beyond two brings minimal improvement in stress reduction.
+
+```{r, message = FALSE, warning = FALSE, out.width = "80%", fig.align="center", fig.cap='MDS plot of Sparrows'}
+mds_result <- cmdscale(dist_matrix, k = 2)
+mds_df <- as.data.frame(mds_result)
+ggplot(mds_df, aes(x = V1, y = V2)) +
+  geom_point(aes(color = sparrow_data$survival)) +
+  labs(x = "Dimension 1", y = "Dimension 2", 
+       title = "PCoA Plot", color = "survival") +
+  theme_minimal()
+```
+
+Figure 6 shows the PCoA results for a dataset on sparrows, visualized in a two-dimensional space. The plot categorizes sparrows based on a survival attribute, with the categories represented by two different colors: red ('F') for those that did not survive and blue ('T') for those that did survive.
+
+The horizontal axis (Dimension 1) and the vertical axis (Dimension 2) represent the two principal coordinates derived from the dataset. There isn't a clear, distinct clustering pattern where one group is entirely separate from the other. Both survived ('T') and not survived ('F') sparrows are spread throughout the plot. This suggests that based solely on these two principal coordinates, there isn't much differentiation in the dataset that correlates strongly with the survival outcomes.
+
+We compare it to PCA with two as the remained principal components,
+
+```{r, message = FALSE, warning = FALSE, out.width = "80%", fig.align="center", fig.cap='PCA plot of Sparrows'}
+sparrow_pca <- prcomp(sparrow, scale = TRUE)
+autoplot(sparrow_pca, data = sparrow_data, colour = 'survival', label.size = 3) +
+  labs(title = "PCA Plot") +
+  theme_minimal()
+```
+
+Figure 7 shows the PCA plot of sparrows, visualized in a space defined by the first two principal components: PC1 and PC2. This plot also categorizes the sparrows based on their survival status, with red dots ('F') representing those that did not survive and blue dots ('T') for those that did survive.
+
+The first principal component (PC1) explains a significant portion of the variance in the dataset at 72.32%, indicating that it captures a major underlying pattern or trend related to the features measured. PC2 explains an additional 10.63% of the variance, providing a secondary perspective on the data.
+
+Similar to the PCoA plot, the PCA plot does not show clear, distinct clusters of survival outcomes. Both survival and non-survival sparrows are scattered throughout the PCA space. Both PCA and PCoA plots show an overlap of survival statuses with no clear separation between the 'F' and 'T' categories. This suggests that the survival outcome is not strongly linearly correlated with the principal components derived from the data in both analyses.
+
+PCA, which focuses more on maximizing variance and often reveals more defined patterns and relationships in the data, still shows an overlap similar to PCoA. This suggests that the variables influencing survival might be complex and not easily separable by linear methods like PCA and PCoA.
+
+While PCoA is more about preserving the distance or dissimilarity accurately in a lower-dimensional space, PCA aims to capture the variance in the data. The similar patterns of overlap in both analyses indicate that further investigation might be needed, perhaps with different analytical approaches or additional data features, to better understand the factors affecting survival.
+
+\subsection{3. Nonmetric Multidimensional Scaling Example: Doubs Fish Data}
+
+In this nMDS example, the will use the Doubs Fish data, the Fish community composition of the Doubs River in France. They come from Verneaux's PhD thesis (1973), where he proposed to use fish species to characterize ecological zones along European rivers and streams. The values in 'Doubs.fish' are counts of individuals of each of 27 species observed in a set of 30 sites located along the 453 km long Doubs River, France. The data contains the following:
+
+```{=tex}
+\begin{itemize}
+    \item env - is a data frame with 30 rows (sites) and 11 environmental variables.
+    \item fish - is a data frame with 30 rows (sites) and 27 fish species.
+    \item xy - is a data frame with 30 rows (sites) and 2 spatial coordinates.
+    \item species - is a data frame with 27 rows (species) and 4 columns (names)
+\end{itemize}
+```
+The goal here is to visualize the fish abundance at different sites. It can reveal natural groupings (clusters) of sites with similar fish communities This can be crucial for managing fish populations.
+
+The data can be access by performing the `data()` function and feed `doubs` in it. The site 8 is removed in the data since that site have no species.
+
+```{r, message = FALSE, warning = FALSE}
+data(doubs)
+spe <- doubs$fish[-8,]
+spe %>% .[1:6, 1:12]
+```
+
+### Descriptive Statistics
+
+Descriptive statistics provides basic information about the features of the data. In this way, it offers a clear overview of the data distribution and central tendencies. This analysis is crucial for identifying trends, spotting anomalies, and laying the groundwork for statistical examinations.
+
+```{r, message = FALSE, warning = FALSE,   fig.align="center", fig.cap='Abundance Distribution and Species Richness'}
+ab <- table(unlist(spe))
+par(mfrow = c(1, 2))
+barplot(ab, las = 1, col = grey(5:0/5), main = "Abundance Distribution",
+        xlab = "Abundance class", ylab = "Frequency")
+site.pre <- rowSums(spe > 0)
+barplot(site.pre, main = "Species richness",
+        xlab = "Sites", ylab = "Number of species",
+        col = "grey ", las = 1)
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE, include = FALSE}
+dev.off()
+```
+
+The plot on the left above reveals that the majority of species observations across various sites register an abundance of zero. This is expected given the large number of sites surveyed-----30 in total-----with many sites not recording the presence of different fish species. There are also sites where the count of fish species present is five, with decreasing frequencies noted for higher abundance classes. This pattern highlights that while some sites exhibit richer biodiversity, many others have little to no fish presence.
+
+The 'Species Richness' plot on the right side illustrates the number of different species found at each site, showing considerable variability. Some sites have a high species richness, nearing 25 species, while others have much lower counts. This variability might suggest differences in environmental conditions, habitat quality, or other ecological factors influencing species distribution across the sites.
+
+```{r}
+sum(spe == 0)
+```
+
+```{r}
+sum(spe == 0)/(nrow(spe) * ncol(spe))
+```
+
+Over half of the dataset is made up of zeros, which is quite high but not unusual for species abundance data. The presence of many zeros can cause a 'double zero problem,' where the absence of species at different sites can inflates their similarity based on what they both lack, rather than what they have. This means two sites might seem similar because they are both missing certain species, but this doesn't necessarily reflect true ecological similarity. Ideally, we want the presence of species, rather than their absence, to inform how similar two sites are.
+
+To counter this double zero issue, we'll transform the species data. Pierre Legendre and Gallagher in 2001 recommended five possible pre-transformations for species data, four of which can be performed using the `decostand()` function from the vegan package.
+
+One effective transformation is the Hellinger transformation, which represents species abundances as the square root of their relative abundance at each site, as suggested by Borcard, Gillet, and Legendre (2011). This approach addresses the problem with double zeros effectively. We will use this transformation on our fish abundance dataset to ensure our similarity assessments are more ecologically meaningful. And we will compare this without the transformation to determine if there is changes in the output.
+
+```{r}
+spe.hel <- decostand(spe, method = "hellinger")
+```
+
+### Checking Assumptions
+
+```{r}
+# Missing Data
+spe %>% sapply(., function(x) sum(is.na(x)))
+
+# Duplicates
+spe %>% 
+  group_by_all() %>% 
+  filter(n() > 1) %>% 
+  ungroup() 
+```
+
+MDS can be performed in R using the metaMDS() function from the vegan package, which is quite user-friendly. This function can handle both raw data and precomputed distance matrices. We will use the Bray-Curtis dissimilarity for this dataset. The Bray-Curtis dissimilarity is a statistic used to quantify the compositional dissimilarity between two different sites or samples based on counts or measurements of species abundance. It is particularly useful in ecology and environmental science for comparing the composition of different ecological communities.
+
+```{r, message = FALSE, warning = FALSE}
+set.seed(2024)
+spe.nmds <- metaMDS(spe, distance="bray")
+spe.nmds
+```
+
+The data will be sufficiently explained in two dimensions, which suggests that the resulting plot or ordination will map the data onto two principal axes. The stress value reported is 0.07376216, which is a measure of the fit quality of the NMDS configuration. A stress value below 0.1, is typically considered an excellent fit, basing on the category Kruskall presented.
+
+```{r, message = FALSE, warning = FALSE, out.width = "80%", fig.align="center", fig.cap='NMDS biplot of a Bray–Curtis dissimilarity matrix of the fish abundance data.'}
+plot(spe.nmds, type="t", main=paste("NMDS/Bray - Stress =", 
+     round(spe.nmds$stress,3)))
+```
+
+The NMDS plot provided has a stress level of 0.074 indicating a reliable fit, visually maps the relationships between different sites, numbered on the plot, and the fish species found there marked in red. The plot shows how some sites cluster together, suggesting they share similar species compositions---likely due to similar environmental conditions or close geographical proximity. Other sites stand out as more isolated, indicating unique ecological characteristics or distinct species that might not be present in more central or clustered locations. Mjority of the fishes are clustered in the site 29, just like what is shown in the descriptive stat eralier. The Teso species solos the site 15, indicating maybe the fish is a territorial or there is an environmental variable there that only the said fish is interested.
+
+\newpage
+
+```{r, message = FALSE, warning = FALSE, out.width = "80%", fig.align="center", fig.cap='Shepard plot'}
+stressplot(spe.nmds, main="Shepard plot")
+```
+
+A Shepard plot is a diagnostic tool used in nMDS to assess the quality of the MDS solution. The Shepard plot identifies a strong correlation between observed dissimilarity and ordination distance $(R^2 > 0.995)$ highlighting a high goodness of fit. Both the non-metric and linear fits show high $R^2$ values, suggesting that the MDS model has been very effective at preserving the distances between data points when reducing dimensionality. The non-metric fit is particularly effective, which is typical as non-metric MDS aims to preserve the rank order rather than the actual values of distances, making it more flexible in handling varied data scales and distributions. The effectiveness of the non-metric MDS in this case suggests that if the data contained non-linear relationships or was from different scales of measurement, the method still managed to capture and represent these complexities accurately.
+
+We now proceed in performing nMDS for the hellinger transformed of the dataset.
+
+```{r, message = FALSE, warning = FALSE}
+set.seed(2024)
+spe.nmds <- metaMDS(spe.hel, distance="bray")
+spe.nmds
+```
+
+The output above suggests that dimension two is enough to represent the data. This reduction allows for easier visualization and interpretation of the data's underlying patterns. A stress value of 0.06742439 indicates an excellent fit of the NMDS model to the data, suggesting that the two-dimensional representation is a reliable depiction of the species dissimilarities. The stress value of Hellinger transformed data is lower than that of without transformation, indicating that the transformed model is much better.
+
+```{r, message = FALSE, warning = FALSE, out.width = "80%", fig.align="center", fig.cap='Hellinger Transformed of NMDS biplot of a Bray–Curtis dissimilarity matrix of the fish abundance data.'}
+plot(spe.nmds, type="t", main=paste("NMDS/Bray - Stress =", 
+     round(spe.nmds$stress,3)))
+```
+
+The numbered points represent different sites, and the red text labels specific fish species found at those sites. Similar to the earlier plot, sites that are close together likely have similar species compositions, and the species names near each cluster give insight into the distinct ecological characteristics of those clusters. This plot includes more specific information about the species present at each site compared to the earlier plot. This detail allows for a more in-depth understanding of the ecological and biological diversity across the sampled sites. Both plots have low stress values, but this one is slightly lower (0.067 compared to 0.074), indicating a slightly better fit in the representation of dissimilarities.
+
+\newpage
+
+```{r, message = FALSE, warning = FALSE, out.width = "80%", fig.align="center", fig.cap='Shepard plot of Hellinger Transformed'}
+stressplot(spe.nmds, main="Shepard plot")
+```
+
+The non-metric fit, with an $R^2$ of 0.995, indicates an excellent adherence to the rank order of the original dissimilarities. This value shows that the nMDS model has successfully captured the underlying structure of the data that preserves the relative dissimilarities among observations. The linear fit has an $R^2$ of 0.981, which is also very high, suggesting that the distances in the MDS space linearly correlate well with the observed dissimilarities. Compared to the Shepard PLot without performing Hellinger transformation, this is better.
+
+\newpage
+
+\section{Comparison}
+
+```{=tex}
+\begin{table}[!ht]
+\centering
+\caption{Ordination Comparison}
+\begin{tabular}{@{}cll@{}}
+\toprule
+\multicolumn{1}{l}{Ordination} & Distance preserved & Data types\\ 
+\midrule
+PCA                            & Euclidean          & Quantitative\\
+CA                             & Chi-Square         & Quantitative(Non-negative)\\
+PCoA                           & Euclidean          & Quantitative\\
+mMDS                           & User defined       & Quantitative, Qualitative\\
+NMDS                           & User defined       & Quantitative, Qualitative\\ 
+\bottomrule
+\end{tabular}
+\end{table}
+```
+The table outlines a comparison of various ordination methods. Each ordination is suited to specific data types and preserving different kinds of distances. PCA is ideal for quantitative data, utilizing Euclidean distances to maintain the straight-line distances in multidimensional space. Correspondence Analysis (CA), on the other hand, is tailored for non-negative quantitative data and uses Chi-Square distances to explore relationships between categorical variables effectively. PCoA extends the flexibility of PCA by accommodating any distance matrix, though it often employs Euclidean distances, making it suitable for a broad range of quantitative data. mMDS and nMDS both allow for user-defined distances, supporting both quantitative and qualitative data. While mMDS strives to preserve the actual distances between observations, NMDS focuses on maintaining the rank order of these distances, providing robustness against non-linear relationships. This makes MDS methods particularly valuable for complex datasets where standard linear methods might not suffice, such as in ecological or sociological studies where the nature of similarity can vary widely.
+
+\newpage
+
+\section{Conclusion}
+
+This report detailed the application of various MDS techniques to explore spatial relationships and patterns in datasets from different domains, including geographical data of Iligan City's barangays, sparrow morphology, and fish abundance in the Doubs River. Each analysis utilized MDS to simplify high-dimensional data into two or three dimensions, maintaining the integrity of the original distances and revealing inherent relationships within the data.
+
+The Metric MDS of Iligan City successfully captured the proximity of barangays, reflecting geographical closeness and potentially shared socio-economic traits. Similarly, PCoA and nMDS provided deep insights into biological data, showing how survival traits in sparrows and species distribution among fish could be visualized and interpreted. Notably, the NMDS applied to fish data highlighted distinct ecological clusters and unique site characteristics, facilitated by the robustness of NMDS against non-linear data relationships.
+
+The integration of these techniques into ecological and socio-spatial analyses emphasizes the utility of MDS in extracting meaningful patterns from complex datasets, which can significantly aid in ecological management, urban planning, and biological research. Future work may explore the integration of additional variables or different scaling methods to further enhance the granularity and accuracy of these multidimensional visualizations. This study underscores the powerful capability of MDS techniques to transform theoretical data into practical insights that can inform decision-making and scientific understanding.
+
+\newpage
+
+```{=tex}
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+\setlength{\parskip}{8pt}
+```
+\section{\centering References}
+
+\noindent 
+
+Borcard, D., Gillet, F., & Legendre, P. (2018). Numerical ecology with R (2nd ed.). Springer International Publishing.
+
+Bryan F. J. Manly, Jorge A. Navarro Alberto. 2017. Multivariate Statistical Methods. Book. https://www.taylorfrancis.com/books/mono/10.1201/9781315382135/multivariate-statistical-methodsbryan-manly-jorge-navarro-alberto.
+
+Borg, I., & Groenen, P. J. F. (2005). Modern Multidimensional Scaling: Theory and Applications. Springer.
+
+Bumpus, Hermon C. 1898. Eleventh Lecture. The Elimination of the Unfit as Illustrated by the Introduced Sparrow, Passer Domesticus. (A Fourth Contribution to the Study of Variation.). Biological Lectures: Woods Hole Marine Biological Laboratory.
+
+Cox, T.F. and Cox, M.AA. (2001). Multidimensional Scaling. Chapman & Hall/CRC, Boca Raton, FL
+
+Kruskal, J.B. (1964a). Psychometrika 29:1-27.
+
+Kruskal, J.B. (1964b). Psychometrika 29:115-129.
+
+Kruskal, J. B., & Wish, M. (1978). Multidimensional Scaling. Sage Publications.
+
+Gower, J.C. (1971). Biometrics 27:857-874
+
+Gower, J.C. (1985). Measures of similarity, dissimilarity and distance. In: Kotz, S, Johnson, N.L., Read, C.B. (eds) Encyclopedia of Statistical Sciences. vol 5. Wiley, New York
+
+Hubalek, Z. (1982). Biol Rev 57:669-689.
+
+Johnson, R. A., Wichern, D. W. (2007). Applied multivariate statistical analysis. Upper Saddle River, NJ: Prentice Hall. ISBN: 0130925535
+
+Legendre, Pierre, and Eugene D. Gallagher. 2001. "Ecologically Meaningful Transformations for Ordination of Species Data." Oecologia 129 (2): 271--80. https://doi.org/10.1007/s004420100716.
+
+Shepard, R.N. (1962a). Psychometrika 27:125-140.
+
+Shepard, R.N. (1962b). Psychometrika 27:219-246.
+
+Torgerson, W.S. (1952). Psychometrika 17:401-419.
+
+Verneaux, J. (1973). In, Thèse d'état:257. Essai de Biotypologie. Besançon.
+
+Young, G. and Householder, A.S. (1938). Psychometrika 3:19-22.
