@@ -1,26 +1,34 @@
 project:
   type: website
-  output-dir: docs
+  output-dir: docss
 
 website:
   title: "Ryan James J. Martinez"
   navbar:
     background: primary
     left:
+      - text: About
+        href: about/index.qmd
       - text: Projects
         href: projects/index.qmd
     right:
       - icon: facebook
         href: https://www.facebook.com/profile.php?id=100074061859253
+      - icon: github
+        href: https://github.com/ryanjames-martinez
       - icon: envelope
         aria-label: email
         href: "mailto:martinezryanjames08@gmail.com"  
+        
   search: 
     location: navbar
     type: textbox
+    
+
 
 filters: 
   - parse-latex.lua
+
     
 format:
   html:
